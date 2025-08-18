@@ -885,3 +885,39 @@ PlayerSettings:
   hmiLoadingImage: {fileID: 0}
   virtualTexturingSupportEnabled: 0
   insecureHttpOption: 0
+using UnityEngine;
+using Unity.Netcode;
+
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(NetworkTransform))]
+public class Player : NetworkBehaviour
+{
+    public float moveSpeed = 5f;
+    private Rigidbody rb;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        rb.interpolation = RigidbodyInterpolation.Interpolate; // smoother
+        rb.constraints = RigidbodyConstraints.FreezeRotation; // don’t tip over
+    }
+
+    private void Update()
+    {
+        if (!IsOwner) return;
+
+        // Read input
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+
+        Vector3 input = new Vector3(h, 0, v);
+
+        // Normalize diagonal input
+        if (input.magnitude > 1f)
+            input.Normalize();
+
+        // Apply movement locally
+        rb.MovePosition(rb.position + input * moveSpeed * Time.deltaTime);
+        // NetworkTransform will sync automatically for other clients
+    }
+}
