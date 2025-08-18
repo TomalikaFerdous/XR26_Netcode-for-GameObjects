@@ -1,13 +1,19 @@
 using UnityEngine;
 using Unity.Netcode;
 
+[RequireComponent(typeof(Rigidbody))]
 public class Player : NetworkBehaviour
 {
     public float moveSpeed = 5f;
+    private Rigidbody rb;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
 
     private void Update()
     {
-        // Only process input for the local player
         if (!IsOwner) return;
 
         Vector3 input = new Vector3(
@@ -16,17 +22,19 @@ public class Player : NetworkBehaviour
             Input.GetAxis("Vertical")
         );
 
+        // Normalize input so diagonal isn't faster
+        if (input.magnitude > 1f)
+            input.Normalize();
 
-        Vector3 move = input * moveSpeed * Time.deltaTime;
-
-        // Send the movement to the server
-        MoveServerRpc(move);
+        // Send input direction to the server
+        MoveServerRpc(input);
     }
 
     [ServerRpc]
-    private void MoveServerRpc(Vector3 move, ServerRpcParams rpcParams = default)
+    private void MoveServerRpc(Vector3 input, ServerRpcParams rpcParams = default)
     {
-        // Apply movement on the server
-        transform.position += move;
+        // Server-side movement using Rigidbody
+        Vector3 move = input * moveSpeed * Time.fixedDeltaTime;
+        rb.MovePosition(rb.position + move);
     }
 }
