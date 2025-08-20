@@ -939,3 +939,31 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 8485872567531766108}
   m_PrefabAsset: {fileID: 0}
+
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+public class ChatUI : MonoBehaviour
+{
+    public TMP_InputField inputField;
+    public Button sendButton;
+    public Transform messageContainer;
+    public TMP_Text messagePrefab;
+
+    void Start()
+    {
+        sendButton.onClick.AddListener(SendMessage);
+    }
+
+    void SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(inputField.text)) return;
+
+        TMP_Text newMsg = Instantiate(messagePrefab, messageContainer);
+        newMsg.text = "You: " + inputField.text;
+
+        inputField.text = "";
+        inputField.ActivateInputField(); // focus again
+    }
+}
